@@ -1,7 +1,7 @@
 package main
 
 import (
-	"lazydocker/gui"
+	"lazydocker/views"
 	"log"
 
 	ui "github.com/gizak/termui/v3"
@@ -13,8 +13,9 @@ func main() {
 	}
 	defer ui.Close()
 
-	sv := gui.StatusView()
-	ui.Render(sv)
+	keys := views.Keys()
+	container := views.ContainerStatus()
+	ui.Render(keys, container)
 
 	uiEvents := ui.PollEvents()
 	for {
@@ -22,6 +23,14 @@ func main() {
 		switch e.ID {
 		case "q", "<C-c>":
 			return
+		case "k", "<Up>":
+			container.FocusUp()
+			ui.Clear()
+			ui.Render(keys, container)
+		case "j", "<Down>":
+			container.FocusDown()
+			ui.Clear()
+			ui.Render(keys, container)
 		}
 	}
 }

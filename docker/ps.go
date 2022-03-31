@@ -21,7 +21,6 @@ type ContainerStatus struct {
 	Status string
 	Ports  string
 	Name   string
-	index  []int
 }
 
 func PS() []ContainerStatus {
