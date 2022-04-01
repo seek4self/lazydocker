@@ -21,13 +21,13 @@ type Table struct {
 	FillRow         bool
 
 	// ColumnResizer is called on each Draw. Can be used for custom column sizing.
-	ColumnResizer    func()
+	ColumnResizer func()
+
+	Page             int
 	ActiveRowIndex   int
 	ActiveRowStyle   ui.Style
 	InactiveRowStyle ui.Style
 	RowTab           map[int]ui.Drawable
-
-	Page int
 
 	textAlignment ui.Alignment
 	x, y          int // drawing coordinate

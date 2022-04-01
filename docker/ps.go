@@ -11,6 +11,7 @@ import (
 var (
 	headers = []string{"CONTAINER ID", "IMAGE", "COMMAND", "CREATED", "STATUS", "PORTS", "NAMES"}
 	index   = make([]int, len(headers))
+	args    = []string{"ps", "-a", "|grep", "\"Exited\""}
 )
 
 type ContainerStatus struct {
@@ -23,15 +24,16 @@ type ContainerStatus struct {
 	Name   string
 }
 
-func PS() []ContainerStatus {
-	cmd := exec.Command("docker", "ps", "-a")
+func PS(option string) []ContainerStatus {
+	cmd := exec.Command("bash", "-c", getArgs(option))
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(stderr.String())
+		fmt.Println(cmd.String(), err)
 	}
 	// fmt.Println("out info")
 	status := make([]ContainerStatus, 0)
@@ -68,5 +70,18 @@ func PS() []ContainerStatus {
 func parseHeader(line string) {
 	for i, h := range headers {
 		index[i] = strings.Index(line, h)
+	}
+}
+
+func getArgs(option string) string {
+	switch option {
+	case "all":
+		return "docker ps -a"
+	case "exit":
+		return `docker ps -a | grep "Exited"`
+	case "up":
+		return "docker ps"
+	default:
+		return fmt.Sprintf(`docker ps -a | grep "%s"`, option)
 	}
 }
