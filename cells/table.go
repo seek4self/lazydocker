@@ -2,6 +2,7 @@ package cells
 
 import (
 	"image"
+	"math"
 
 	ui "github.com/gizak/termui/v3"
 )
@@ -10,14 +11,12 @@ type Table struct {
 	// *widgets.Table
 	*ui.Block
 	Header          []string
-	Height          int
 	Rows            [][]string
 	ColumnWidths    []int
 	TextStyle       ui.Style
 	RowSeparator    bool
 	ColumnSeparator bool
 	ColumnAlignment []ui.Alignment
-	textAlignment   ui.Alignment
 	RowStyles       map[int]ui.Style
 	FillRow         bool
 
@@ -28,7 +27,10 @@ type Table struct {
 	InactiveRowStyle ui.Style
 	RowTab           map[int]ui.Drawable
 
-	x, y int // drawing coordinate
+	Page int
+
+	textAlignment ui.Alignment
+	x, y          int // drawing coordinate
 }
 
 func NewTable() *Table {
@@ -44,9 +46,14 @@ func NewTable() *Table {
 }
 
 func (t *Table) FocusDown() {
-	if t.ActiveRowIndex < len(t.Rows)-1 {
+	if t.activeRow() < len(t.Rows)-1 &&
+		t.ActiveRowIndex < t.rowsCount()-1 {
 		t.ActiveRowIndex++
 	}
+}
+
+func (t *Table) activeRow() int {
+	return t.ActiveRowIndex + t.Page*t.rowsCount()
 }
 
 func (t *Table) FocusUp() {
@@ -55,14 +62,45 @@ func (t *Table) FocusUp() {
 	}
 }
 
+func (t *Table) NextPage() {
+	if t.Page < t.totalPage()-1 {
+		t.Page++
+		if t.activeRow() >= len(t.Rows) {
+			t.ActiveRowIndex = 0
+		}
+	}
+}
+
+func (t *Table) PrePage() {
+	if t.Page > 0 {
+		t.Page--
+	}
+}
+
 func (t *Table) Draw(buf *ui.Buffer) {
-	// t.Block.Draw(buf)
 	t.Block.Draw(buf)
 	t.drawTable(buf)
 	t.drawTabPane(buf)
 	t.drawTabPage()
 }
 
+func (t *Table) height() int {
+	return t.Inner.Dy()
+}
+
+func (t *Table) width() int {
+	return t.Inner.Dx()
+}
+
+func (t *Table) rowsCount() int {
+	return t.Inner.Dy() - 2
+}
+
+func (t *Table) totalPage() int {
+	return int(math.Ceil(float64(len(t.Rows)) / float64(t.rowsCount())))
+}
+
+// fix columns width
 func (t *Table) fixWidths() {
 	if len(t.ColumnWidths) > 0 {
 		return
@@ -78,7 +116,6 @@ func (t *Table) fixWidths() {
 func (t *Table) drawHeader(buf *ui.Buffer) {
 	t.drawRow(-1, buf)
 	t.drawHorizontalSep(-1, buf)
-
 }
 
 func (t *Table) rowStyle(rowNum int, buf *ui.Buffer) ui.Style {
@@ -184,7 +221,8 @@ func (t *Table) drawTable(buf *ui.Buffer) {
 	t.drawHeader(buf)
 
 	// draw rows
-	for i := 0; i < len(t.Rows) && t.y < t.Inner.Max.Y; i++ {
+	for i := t.Page * t.rowsCount(); i < len(t.Rows) && t.y < t.Inner.Max.Y; i++ {
+		// fmt.Println("                                                     ", i, t.rowsCount())
 		t.drawRow(i, buf)
 	}
 }
@@ -198,7 +236,7 @@ func (t *Table) drawTabPage() {
 func (t *Table) drawTabPane(buf *ui.Buffer) {
 	yCoordinate := t.Inner.Min.Y + t.ActiveRowIndex + 2
 	t.columnAlignment(0)
-	text := t.Rows[t.ActiveRowIndex][0]
+	text := t.Rows[t.activeRow()][0]
 	width := t.ColumnWidths[0]
 	offset := 0
 	if len(text) >= width || t.textAlignment == ui.AlignLeft {

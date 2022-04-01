@@ -26,7 +26,7 @@ func ContainerStatus() *cells.Table {
 	table.ColumnWidths = []int{20, 9, 11}
 	table.ColumnAlignment = []ui.Alignment{ui.AlignLeft, ui.AlignCenter, ui.AlignLeft}
 	table.TextStyle = ui.NewStyle(ui.ColorWhite)
-	table.SetRect(0, 1, 40, len(status)+4+1)
+	table.SetRect(0, 1, 40, 10)
 	table.Title = "Containers"
 	// table.ColumnSeparator = true
 	return table

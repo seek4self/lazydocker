@@ -31,6 +31,14 @@ func main() {
 			container.FocusDown()
 			ui.Clear()
 			ui.Render(keys, container)
+		case "h", "<Left>":
+			container.PrePage()
+			ui.Clear()
+			ui.Render(keys, container)
+		case "l", "<Right>":
+			container.NextPage()
+			ui.Clear()
+			ui.Render(keys, container)
 		}
 	}
 }
