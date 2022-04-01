@@ -228,9 +228,10 @@ func (t *Table) drawTable(buf *ui.Buffer) {
 }
 
 func (t *Table) drawTabPage() {
-	if item, ok := t.RowTab[t.ActiveRowIndex]; ok {
-		ui.Render(item)
-	}
+	p := NewParagraph()
+	p.Text = p.GetText(t.Rows[t.activeRow()][0])
+	p.SetRect(45, 0, 200, 200)
+	ui.Render(p)
 }
 
 func (t *Table) drawTabPane(buf *ui.Buffer) {
