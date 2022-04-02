@@ -46,10 +46,15 @@ func NewTable() *Table {
 }
 
 func (t *Table) FocusDown() {
-	if t.activeRow() < len(t.Rows)-1 &&
-		t.ActiveRowIndex < t.rowsCount()-1 {
-		t.ActiveRowIndex++
+	if t.activeRow()+1 >= len(t.Rows) {
+		return
 	}
+	if t.ActiveRowIndex+1 == t.rowsCount() {
+		t.Page++
+		t.ActiveRowIndex = 0
+		return
+	}
+	t.ActiveRowIndex++
 }
 
 func (t *Table) activeRow() int {
@@ -57,9 +62,15 @@ func (t *Table) activeRow() int {
 }
 
 func (t *Table) FocusUp() {
+	if t.activeRow() == 0 {
+		return
+	}
 	if t.ActiveRowIndex > 0 {
 		t.ActiveRowIndex--
+		return
 	}
+	t.Page--
+	t.ActiveRowIndex = t.rowsCount() - 1
 }
 
 func (t *Table) NextPage() {
