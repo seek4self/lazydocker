@@ -243,7 +243,7 @@ func (t *Table) drawTable(buf *ui.Buffer) {
 func (t *Table) drawTabPage() {
 	p := NewParagraph()
 	p.Text = p.GetText(t.Rows[t.activeRow()][0])
-	p.SetRect(45, 0, 200, 200)
+	p.SetRect(t.Inner.Max.X+3, t.Inner.Min.Y-1, TerminalWidth, TerminalHeight)
 	ui.Render(p)
 }
 

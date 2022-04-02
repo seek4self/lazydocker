@@ -32,6 +32,12 @@ func main() {
 		switch e.ID {
 		case "q", "<C-c>":
 			return
+		case "<Resize>":
+			size := e.Payload.(ui.Resize)
+			cells.TerminalWidth = size.Width
+			cells.TerminalHeight = size.Height
+			ui.Clear()
+			ui.Render(keys, container)
 		case "k", "<Up>":
 			container.FocusUp()
 			ui.Clear()

@@ -15,7 +15,7 @@ func ContainerStatus(option string) *cells.Table {
 	// table.Rows = append(table.Rows, []string{"ums", "Up", "3 days"})
 	// table.Rows = append(table.Rows, []string{"gws", "Up", "3 days"})
 	UpdateContainers(option, table)
-	table.ColumnWidths = []int{20, 9, 11}
+	table.ColumnWidths = []int{20, 8, 12}
 	table.ColumnAlignment = []ui.Alignment{ui.AlignLeft, ui.AlignCenter, ui.AlignLeft}
 	table.TextStyle = ui.NewStyle(ui.ColorWhite)
 	table.SetRect(0, 1, 40, 10)
