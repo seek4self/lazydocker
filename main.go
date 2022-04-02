@@ -20,7 +20,7 @@ func main() {
 	defer ui.Close()
 
 	keys := views.Keys()
-	container := views.ContainerStatus("up")
+	container := views.ContainerStatus()
 	ui.Render(keys, container)
 	input := cells.NewInput()
 	input.SetRect(40, 10, 80, 13)
@@ -37,6 +37,8 @@ func main() {
 			cells.TerminalWidth = size.Width
 			cells.TerminalHeight = size.Height
 			ui.Clear()
+			container.ResetSize(0, 0, 40, cells.TerminalHeight/2)
+			keys.SetRect(0, cells.TerminalHeight-1, cells.TerminalWidth, cells.TerminalHeight)
 			ui.Render(keys, container)
 		case "k", "<Up>":
 			container.FocusUp()

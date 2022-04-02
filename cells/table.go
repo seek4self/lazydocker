@@ -106,7 +106,13 @@ func (t *Table) width() int {
 }
 
 func (t *Table) rowsCount() int {
-	return t.Inner.Dy() - 2
+	return t.height() - 2
+}
+
+func (t *Table) ResetSize(x1, y1, x2, y2 int) {
+	t.SetRect(x1, y1, x2, y2)
+	t.ActiveRowIndex = 0
+	t.Page = 0
 }
 
 func (t *Table) totalPage() int {
@@ -243,7 +249,8 @@ func (t *Table) drawTable(buf *ui.Buffer) {
 func (t *Table) drawTabPage() {
 	p := NewParagraph()
 	p.Text = p.GetText(t.Rows[t.activeRow()][0])
-	p.SetRect(t.Inner.Max.X+3, t.Inner.Min.Y-1, TerminalWidth, TerminalHeight)
+	p.Title = "Container Info"
+	p.SetRect(t.Inner.Max.X+3, t.Inner.Min.Y-1, TerminalWidth, TerminalHeight-1)
 	ui.Render(p)
 }
 
