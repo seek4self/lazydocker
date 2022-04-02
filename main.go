@@ -1,6 +1,7 @@
 package main
 
 import (
+	"lazydocker/cells"
 	"lazydocker/views"
 	"log"
 
@@ -21,6 +22,9 @@ func main() {
 	keys := views.Keys()
 	container := views.ContainerStatus("up")
 	ui.Render(keys, container)
+	input := cells.NewInput()
+	input.SetRect(40, 10, 80, 13)
+	input.Title = "find container with:"
 
 	uiEvents := ui.PollEvents()
 	for {
@@ -50,6 +54,12 @@ func main() {
 				statusTimes = (statusTimes + 1) % len(options)
 			}
 			views.UpdateContainers(options[statusTimes], container)
+			ui.Clear()
+			ui.Render(keys, container)
+		case "/":
+			go input.Scan()
+			input.ListenKeyboard(uiEvents)
+			views.UpdateContainers(string(input.Stdin), container)
 			ui.Clear()
 			ui.Render(keys, container)
 		}

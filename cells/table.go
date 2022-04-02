@@ -80,8 +80,10 @@ func (t *Table) PrePage() {
 func (t *Table) Draw(buf *ui.Buffer) {
 	t.Block.Draw(buf)
 	t.drawTable(buf)
-	t.drawTabPane(buf)
-	t.drawTabPage()
+	if len(t.Rows) > 0 {
+		t.drawTabPane(buf)
+		t.drawTabPage()
+	}
 }
 
 func (t *Table) height() int {

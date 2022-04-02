@@ -11,7 +11,7 @@ import (
 var (
 	headers = []string{"CONTAINER ID", "IMAGE", "COMMAND", "CREATED", "STATUS", "PORTS", "NAMES"}
 	index   = make([]int, len(headers))
-	args    = []string{"ps", "-a", "|grep", "\"Exited\""}
+	args    = []string{"ps", "-a"}
 )
 
 type ContainerStatus struct {
@@ -25,7 +25,7 @@ type ContainerStatus struct {
 }
 
 func PS(option string) []ContainerStatus {
-	cmd := exec.Command("bash", "-c", getArgs(option))
+	cmd := exec.Command("docker", getArgs(option)...)
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -73,15 +73,15 @@ func parseHeader(line string) {
 	}
 }
 
-func getArgs(option string) string {
+func getArgs(option string) []string {
 	switch option {
 	case "all":
-		return "docker ps -a"
+		return []string{"ps", "-a"}
 	case "exit":
-		return `docker ps -a | grep "Exited"`
+		return []string{"ps", "-f", "status=exited"}
 	case "up":
-		return "docker ps"
+		return []string{"ps"}
 	default:
-		return fmt.Sprintf(`docker ps -a | grep "%s"`, option)
+		return []string{"ps", "-f", fmt.Sprintf("name=%s", option)}
 	}
 }
