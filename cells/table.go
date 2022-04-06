@@ -5,6 +5,7 @@ import (
 	"math"
 
 	ui "github.com/gizak/termui/v3"
+	"github.com/gizak/termui/v3/widgets"
 )
 
 type Table struct {
@@ -28,6 +29,8 @@ type Table struct {
 	ActiveRowStyle   ui.Style
 	InactiveRowStyle ui.Style
 	RowTab           map[int]ui.Drawable
+	TabTitle         string
+	TabContent       func(string) []byte
 
 	textAlignment ui.Alignment
 	x, y          int // drawing coordinate
@@ -59,6 +62,10 @@ func (t *Table) FocusDown() {
 
 func (t *Table) activeRow() int {
 	return t.ActiveRowIndex + t.Page*t.rowsCount()
+}
+
+func (t *Table) activeText() string {
+	return t.Rows[t.activeRow()][0]
 }
 
 func (t *Table) FocusUp() {
@@ -247,17 +254,17 @@ func (t *Table) drawTable(buf *ui.Buffer) {
 }
 
 func (t *Table) drawTabPage() {
-	p := NewParagraph()
-	p.Text = p.GetText(t.Rows[t.activeRow()][0])
-	p.Title = "Container Info"
-	p.SetRect(t.Inner.Max.X+3, t.Inner.Min.Y-1, TerminalWidth, TerminalHeight-1)
+	p := widgets.NewParagraph()
+	p.Text = string(t.TabContent(t.activeText()))
+	p.Title = t.TabTitle
+	p.SetRect(t.Inner.Max.X+3, 0, TerminalWidth, TerminalHeight-1)
 	ui.Render(p)
 }
 
 func (t *Table) drawTabPane(buf *ui.Buffer) {
 	yCoordinate := t.Inner.Min.Y + t.ActiveRowIndex + 2
 	t.columnAlignment(0)
-	text := t.Rows[t.activeRow()][0]
+	text := t.activeText()
 	width := t.ColumnWidths[0]
 	offset := 0
 	if len(text) >= width || t.textAlignment == ui.AlignLeft {

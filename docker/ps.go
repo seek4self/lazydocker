@@ -8,7 +8,6 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/client"
 	units "github.com/docker/go-units"
 )
 
@@ -29,10 +28,6 @@ type ContainerStatus struct {
 }
 
 func PS(option string) []ContainerStatus {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		panic(err)
-	}
 	containers, err := cli.ContainerList(context.Background(), parseFileter(option))
 	if err != nil {
 		panic(err)

@@ -1,8 +1,6 @@
 package cells
 
 import (
-	"lazydocker/docker"
-
 	"github.com/gizak/termui/v3/widgets"
 )
 
@@ -12,9 +10,9 @@ type Paragraph struct {
 	GetText func(name string) string
 }
 
-func NewParagraph() *Paragraph {
-	return &Paragraph{
-		Paragraph: widgets.NewParagraph(),
-		GetText:   docker.Inspect,
-	}
-}
+// func NewParagraph() *Paragraph {
+// 	return &Paragraph{
+// 		Paragraph: widgets.NewParagraph(),
+// 		GetText:   docker.Inspect,
+// 	}
+// }

@@ -1,20 +1,78 @@
 package docker
 
 import (
-	"bytes"
-	"fmt"
-	"os/exec"
+	"context"
+	"encoding/json"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/daemon/network"
+	"github.com/docker/go-connections/nat"
 )
 
-func Inspect(name string) string {
-	cmd := exec.Command("docker", "inspect", name)
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
+type State struct {
+	Status string
+}
+
+type HostConfig struct {
+	// Applicable to all platforms
+	Binds           []string                // List of volume bindings for this container
+	ContainerIDFile string                  // File (path) where the containerId is written
+	NetworkMode     container.NetworkMode   // Network mode to use for the container
+	PortBindings    nat.PortMap             // Port mapping between the exposed port (container) and the host
+	RestartPolicy   container.RestartPolicy // Restart policy to be used for the container
+	AutoRemove      bool                    // Automatically remove container when it exits
+	VolumeDriver    string                  // Name of the volume driver used to mount volumes
+	VolumesFrom     []string                // List of volumes to take from other container
+}
+
+type NetworkSettings struct {
+	Bridge   string      // Bridge is the Bridge name the network uses(e.g. `docker0`)
+	Ports    nat.PortMap // Ports is a collection of PortBinding indexed by Port
+	Networks map[string]*network.EndpointSettings
+}
+
+type Info struct {
+	ID      string `json:"Id"`
+	Created string
+	Path    string
+	Args    []string
+	State   *types.ContainerState
+	// Image        string
+	Name         string
+	RestartCount int
+	Driver       string
+	Platform     string
+	// MountLabel      string
+	// ProcessLabel    string
+	AppArmorProfile string
+	// ExecIDs         []string
+	HostConfig *HostConfig
+	SizeRw     *int64 `json:",omitempty"`
+	SizeRootFs *int64 `json:",omitempty"`
+	// Mounts          []types.MountPoint
+	Config          *container.Config
+	NetworkSettings *NetworkSettings
+}
+
+func Inspect(name string) []byte {
+	_, raw, err := cli.ContainerInspectWithRaw(context.Background(), name, false)
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
-	return stdout.String()
+	var info Info
+	_ = json.Unmarshal(raw, &info)
+	buf, _ := json.MarshalIndent(info, "", "    ")
+	return buf
+
+	// cmd := exec.Command("docker", "inspect", name)
+	// var stdout bytes.Buffer
+	// var stderr bytes.Buffer
+	// cmd.Stdout = &stdout
+	// cmd.Stderr = &stderr
+	// err := cmd.Run()
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// return stdout.String()
 }

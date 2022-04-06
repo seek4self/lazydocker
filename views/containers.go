@@ -18,6 +18,8 @@ func ContainerStatus() *cells.Table {
 	table.ColumnAlignment = []ui.Alignment{ui.AlignLeft, ui.AlignCenter, ui.AlignLeft}
 	table.TextStyle = ui.NewStyle(ui.ColorWhite)
 	table.Title = "Containers"
+	table.TabTitle = "Contain info"
+	table.TabContent = docker.Inspect
 	// table.ColumnSeparator = true
 	return table
 }
