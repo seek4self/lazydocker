@@ -20,10 +20,12 @@ type Table struct {
 	ColumnAlignment []ui.Alignment
 	RowStyles       map[int]ui.Style
 	FillRow         bool
+	Width           int
 
 	// ColumnResizer is called on each Draw. Can be used for custom column sizing.
 	ColumnResizer func()
 
+	Active           bool
 	Page             int
 	ActiveRowIndex   int
 	ActiveRowStyle   ui.Style
@@ -98,7 +100,7 @@ func (t *Table) PrePage() {
 func (t *Table) Draw(buf *ui.Buffer) {
 	t.Block.Draw(buf)
 	t.drawTable(buf)
-	if len(t.Rows) > 0 {
+	if t.Active && len(t.Rows) > 0 {
 		t.drawTabPane(buf)
 		t.drawTabPage()
 	}

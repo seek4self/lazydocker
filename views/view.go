@@ -29,12 +29,14 @@ func NewView() *View {
 func (v *View) Init() *View {
 	initKeys(v)
 	initContainers(v)
+	v.containers.Active = true
 	initSearch(v)
+	initImages(v)
 	return v
 }
 
 func (v *View) Render() {
-	ui.Render(v.keys, v.containers)
+	ui.Render(v.keys, v.containers, v.images)
 	uiEvents := ui.PollEvents()
 	for {
 		e := <-uiEvents
@@ -61,6 +63,7 @@ func (v *View) OnResize(size ui.Resize) {
 	cells.TerminalWidth = size.Width
 	cells.TerminalHeight = size.Height
 	v.containers.ResetSize(0, 0, 40, cells.TerminalHeight/2)
+	v.images.ResetSize(0, cells.TerminalHeight/2, 40, cells.TerminalHeight-1)
 	v.keys.SetRect(0, cells.TerminalHeight-1, cells.TerminalWidth, cells.TerminalHeight)
 	v.ReRender()
 }
@@ -93,5 +96,5 @@ func (v *View) OnSearch(e <-chan ui.Event) {
 
 func (v *View) ReRender() {
 	ui.Clear()
-	ui.Render(v.keys, v.containers)
+	ui.Render(v.keys, v.containers, v.images)
 }
