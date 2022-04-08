@@ -30,9 +30,11 @@ type Table struct {
 	ActiveRowIndex int
 	ActiveStyle    ui.Style
 	InactiveStyle  ui.Style
-	RowTab         map[int]ui.Drawable
-	TabTitle       string
-	TabContent     func(string) []byte
+
+	RowTab     map[int]ui.Drawable
+	TabTitle   string
+	TabContent func(string) []byte
+	tabPage    *widgets.Paragraph
 
 	textAlignment ui.Alignment
 	x, y          int // drawing coordinate
@@ -40,13 +42,17 @@ type Table struct {
 
 func NewTable() *Table {
 	return &Table{
-		Block:          ui.NewBlock(),
-		TextStyle:      ui.Theme.Table.Text,
-		RowStyles:      make(map[int]ui.Style),
-		ColumnResizer:  func() {},
+		Block:         ui.NewBlock(),
+		TextStyle:     ui.Theme.Table.Text,
+		RowStyles:     make(map[int]ui.Style),
+		ColumnResizer: func() {},
+
 		ActiveRowIndex: 0,
 		ActiveStyle:    ui.NewStyle(51),
 		InactiveStyle:  ui.NewStyle(ui.ColorWhite),
+
+		TabContent: func(string) []byte { return []byte{} },
+		tabPage:    widgets.NewParagraph(),
 	}
 }
 
@@ -116,7 +122,6 @@ func (t *Table) Draw(buf *ui.Buffer) {
 	t.Block.Draw(buf)
 	t.drawTable(buf)
 	if t.active && len(t.Rows) > 0 {
-		t.drawTabPane(buf)
 		t.drawTabPage()
 	}
 }
@@ -157,8 +162,9 @@ func (t *Table) fixWidths() {
 }
 
 func (t *Table) drawHeader(buf *ui.Buffer) {
+	t.RowSeparator = true
 	t.drawRow(-1, buf)
-	t.drawHorizontalSep(-1, buf)
+	t.RowSeparator = false
 }
 
 func (t *Table) rowStyle(rowNum int, buf *ui.Buffer) ui.Style {
@@ -239,6 +245,9 @@ func (t *Table) drawVerticalSep(rowStyle ui.Style, buf *ui.Buffer) {
 	sepX := t.Inner.Min.X
 	verticalCell := ui.NewCell(sep, sepStyle)
 	for i, width := range t.ColumnWidths {
+		if i == len(t.ColumnWidths)-1 {
+			break
+		}
 		verticalCell.Style.Bg = sepStyle.Bg
 		if t.FillRow && i < len(t.ColumnWidths)-1 {
 			verticalCell.Style.Bg = rowStyle.Bg
@@ -274,31 +283,8 @@ func (t *Table) drawTable(buf *ui.Buffer) {
 }
 
 func (t *Table) drawTabPage() {
-	p := widgets.NewParagraph()
-	p.Text = string(t.TabContent(t.activeText()))
-	p.Title = t.TabTitle
-	p.SetRect(t.Inner.Max.X+1, 0, TerminalWidth, TerminalHeight-1)
-	ui.Render(p)
-}
-
-func (t *Table) drawTabPane(buf *ui.Buffer) {
-	t.y = t.Inner.Min.Y + t.ActiveRowIndex + 2
-	t.drawRow(t.activeRow(), buf)
-
-	// t.columnAlignment(0)
-	// text := t.activeText()
-	// width := t.ColumnWidths[0]
-	// offset := 0
-	// if len(text) >= width || t.textAlignment == ui.AlignLeft {
-
-	// } else if t.textAlignment == ui.AlignCenter {
-	// 	offset = (width - len(text)) / 2
-	// } else {
-	// 	offset = width - len(text)
-	// }
-	// buf.SetString(
-	// 	ui.TrimString(text, width),
-	// 	t.ActiveStyle,
-	// 	image.Pt(t.Inner.Min.X+offset, t.y),
-	// )
+	t.tabPage.Text = string(t.TabContent(t.activeText()))
+	t.tabPage.Title = t.TabTitle
+	t.tabPage.SetRect(t.Inner.Max.X+1, 0, TerminalWidth, TerminalHeight-1)
+	ui.Render(t.tabPage)
 }

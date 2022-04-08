@@ -85,12 +85,12 @@ func (v *View) OnResize(size ui.Resize) {
 
 func (v *View) OnUp() {
 	v.activeSort[v.activeIndex].FocusUp()
-	v.ReRender()
+	ui.Render(v.activeSort[v.activeIndex])
 }
 
 func (v *View) OnDown() {
 	v.activeSort[v.activeIndex].FocusDown()
-	v.ReRender()
+	ui.Render(v.activeSort[v.activeIndex])
 }
 
 func (v *View) OnSwithStatus() {
