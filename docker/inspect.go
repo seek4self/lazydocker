@@ -32,7 +32,7 @@ type NetworkSettings struct {
 	Networks map[string]*network.EndpointSettings
 }
 
-type Info struct {
+type ContainerInfo struct {
 	ID      string `json:"Id"`
 	Created string
 	Path    string
@@ -55,12 +55,12 @@ type Info struct {
 	NetworkSettings *NetworkSettings
 }
 
-func Inspect(name string) []byte {
+func ContainerInspect(name string) []byte {
 	_, raw, err := cli.ContainerInspectWithRaw(context.Background(), name, false)
 	if err != nil {
 		panic(err)
 	}
-	var info Info
+	var info ContainerInfo
 	_ = json.Unmarshal(raw, &info)
 	buf, _ := json.MarshalIndent(info, "", "    ")
 	return buf
@@ -75,4 +75,34 @@ func Inspect(name string) []byte {
 	// 	fmt.Println(err)
 	// }
 	// return stdout.String()
+}
+
+type ImageInfo struct {
+	ID            string `json:"Id"`
+	RepoTags      []string
+	RepoDigests   []string
+	Parent        string
+	Comment       string
+	Created       string
+	Container     string
+	DockerVersion string
+	Author        string
+	Config        *container.Config
+	Architecture  string
+	Variant       string `json:",omitempty"`
+	Os            string
+	OsVersion     string `json:",omitempty"`
+	Size          int64
+	VirtualSize   int64
+}
+
+func ImageInspect(id string) []byte {
+	_, raw, err := cli.ImageInspectWithRaw(context.Background(), id)
+	if err != nil {
+		panic(err)
+	}
+	var info ImageInfo
+	_ = json.Unmarshal(raw, &info)
+	buf, _ := json.MarshalIndent(info, "", "    ")
+	return buf
 }

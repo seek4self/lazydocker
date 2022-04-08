@@ -84,24 +84,30 @@ func (v *View) OnResize(size ui.Resize) {
 }
 
 func (v *View) OnUp() {
-	v.containers.FocusUp()
+	v.activeSort[v.activeIndex].FocusUp()
 	v.ReRender()
 }
 
 func (v *View) OnDown() {
-	v.containers.FocusDown()
+	v.activeSort[v.activeIndex].FocusDown()
 	v.ReRender()
 }
 
 func (v *View) OnSwithStatus() {
-	freshContainers(containerOption(), v.containers)
-	v.ReRender()
+	if v.activeIndex == 0 {
+		freshContainers(containerOption(), v.containers)
+		v.ReRender()
+	}
 }
 
 func (v *View) OnSearch(e <-chan ui.Event) {
 	go v.search.Scan()
 	v.search.ListenKeyboard(e)
-	freshContainers(string(v.search.Stdin), v.containers)
+	if v.activeIndex == 0 {
+		freshContainers(string(v.search.Stdin), v.containers)
+	} else {
+		freshImages(string(v.search.Stdin), v.images)
+	}
 	v.ReRender()
 }
 

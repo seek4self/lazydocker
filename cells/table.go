@@ -167,6 +167,9 @@ func (t *Table) rowStyle(rowNum int, buf *ui.Buffer) ui.Style {
 	if style, ok := t.RowStyles[rowNum]; ok {
 		rowStyle = style
 	}
+	if t.active && rowNum == t.activeRow() {
+		rowStyle = t.ActiveStyle
+	}
 	if t.FillRow {
 		blankCell := ui.NewCell(' ', rowStyle)
 		buf.Fill(blankCell, image.Rect(t.Inner.Min.X, t.y, t.Inner.Max.X, t.y+1))
@@ -279,21 +282,23 @@ func (t *Table) drawTabPage() {
 }
 
 func (t *Table) drawTabPane(buf *ui.Buffer) {
-	yCoordinate := t.Inner.Min.Y + t.ActiveRowIndex + 2
-	t.columnAlignment(0)
-	text := t.activeText()
-	width := t.ColumnWidths[0]
-	offset := 0
-	if len(text) >= width || t.textAlignment == ui.AlignLeft {
+	t.y = t.Inner.Min.Y + t.ActiveRowIndex + 2
+	t.drawRow(t.activeRow(), buf)
 
-	} else if t.textAlignment == ui.AlignCenter {
-		offset = (width - len(text)) / 2
-	} else {
-		offset = width - len(text)
-	}
-	buf.SetString(
-		ui.TrimString(text, width),
-		t.ActiveStyle,
-		image.Pt(t.Inner.Min.X+offset, yCoordinate),
-	)
+	// t.columnAlignment(0)
+	// text := t.activeText()
+	// width := t.ColumnWidths[0]
+	// offset := 0
+	// if len(text) >= width || t.textAlignment == ui.AlignLeft {
+
+	// } else if t.textAlignment == ui.AlignCenter {
+	// 	offset = (width - len(text)) / 2
+	// } else {
+	// 	offset = width - len(text)
+	// }
+	// buf.SetString(
+	// 	ui.TrimString(text, width),
+	// 	t.ActiveStyle,
+	// 	image.Pt(t.Inner.Min.X+offset, t.y),
+	// )
 }

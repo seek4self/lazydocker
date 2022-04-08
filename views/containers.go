@@ -50,5 +50,5 @@ func initContainers(v *View) {
 	v.containers.ColumnAlignment = []ui.Alignment{ui.AlignLeft, ui.AlignLeft, ui.AlignRight}
 	v.containers.TextStyle = ui.NewStyle(ui.ColorWhite)
 	v.containers.TabTitle = "Container info"
-	v.containers.TabContent = docker.Inspect
+	v.containers.TabContent = docker.ContainerInspect
 }
