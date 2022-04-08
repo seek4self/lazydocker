@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"lazydocker/cells"
 	"lazydocker/docker"
+	"time"
 
 	ui "github.com/gizak/termui/v3"
 )
@@ -17,20 +18,21 @@ const (
 )
 
 func initImages(v *View) {
-	v.images.Header = []string{"Name", "Size"}
+	v.images.Header = []string{"Name", "Created", "Size"}
 	v.images.Rows = make([][]string, 0)
 	images := docker.Images()
 	for _, i := range images {
-		name := i.ID
-		if len(i.RepoTags) > 0 {
-			name = i.RepoTags[0]
-		}
-		v.images.Rows = append(v.images.Rows, []string{name, parseSize(i.Size)})
+		v.images.Rows = append(v.images.Rows, []string{
+			i.ID[7:19],
+			time.Unix(i.Created, 0).Format("2006-01-02 15:04:05"),
+			parseSize(i.Size),
+		})
 	}
-	v.images.ResetSize(0, cells.TerminalHeight/2, 40, cells.TerminalHeight-1)
-	v.images.ColumnWidths = []int{31, 9}
-	v.images.ColumnAlignment = []ui.Alignment{ui.AlignLeft, ui.AlignRight}
+	v.images.ResetSize(0, cells.TerminalHeight/2, 50, cells.TerminalHeight-1)
+	v.images.ColumnWidths = []int{16, 24, 8}
+	v.images.ColumnAlignment = []ui.Alignment{ui.AlignLeft, ui.AlignLeft, ui.AlignRight}
 	v.images.Title = "Images"
+	v.images.TabContent = func(s string) []byte { return []byte{} }
 }
 
 func parseSize(size int64) string {

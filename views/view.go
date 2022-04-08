@@ -7,31 +7,35 @@ import (
 	"github.com/gizak/termui/v3/widgets"
 )
 
-var options = []string{"up", "all", "exit", ""}
-
 type View struct {
-	containers      *cells.Table
-	images          *cells.Table
-	keys            *widgets.Paragraph
-	search          *cells.Input
-	containerStatus int
+	containers *cells.Table
+	images     *cells.Table
+	keys       *widgets.Paragraph
+	search     *cells.Input
+
+	activeStyle ui.Style
+	activeSort  []cells.Cell
+	activeIndex int
 }
 
 func NewView() *View {
 	return &View{
-		containers: cells.NewTable(),
-		images:     cells.NewTable(),
-		keys:       widgets.NewParagraph(),
-		search:     cells.NewInput(),
+		containers:  cells.NewTable(),
+		images:      cells.NewTable(),
+		keys:        widgets.NewParagraph(),
+		search:      cells.NewInput(),
+		activeStyle: ui.NewStyle(51),
+		activeSort:  make([]cells.Cell, 0),
 	}
 }
 
 func (v *View) Init() *View {
 	initKeys(v)
 	initContainers(v)
-	v.containers.Active = true
 	initSearch(v)
 	initImages(v)
+	v.activeSort = []cells.Cell{v.containers, v.images}
+	v.containers.Active(v.activeStyle)
 	return v
 }
 
@@ -43,6 +47,8 @@ func (v *View) Render() {
 		switch e.ID {
 		case "q", "<C-c>":
 			return
+		case "<Tab>":
+			v.OnActive()
 		case "<Resize>":
 			v.OnResize(e.Payload.(ui.Resize))
 		case "k", "<Up>":
@@ -59,11 +65,20 @@ func (v *View) Render() {
 	}
 }
 
+func (v *View) OnActive() {
+	for i := range v.activeSort {
+		v.activeSort[i].InActive()
+	}
+	v.activeIndex = (v.activeIndex + 1) % len(v.activeSort)
+	v.activeSort[v.activeIndex].Active(v.activeStyle)
+	v.ReRender()
+}
+
 func (v *View) OnResize(size ui.Resize) {
 	cells.TerminalWidth = size.Width
 	cells.TerminalHeight = size.Height
-	v.containers.ResetSize(0, 0, 40, cells.TerminalHeight/2)
-	v.images.ResetSize(0, cells.TerminalHeight/2, 40, cells.TerminalHeight-1)
+	v.containers.ResetSize(0, 0, 50, cells.TerminalHeight/2)
+	v.images.ResetSize(0, cells.TerminalHeight/2, 50, cells.TerminalHeight-1)
 	v.keys.SetRect(0, cells.TerminalHeight-1, cells.TerminalWidth, cells.TerminalHeight)
 	v.ReRender()
 }
@@ -79,18 +94,14 @@ func (v *View) OnDown() {
 }
 
 func (v *View) OnSwithStatus() {
-	v.containerStatus = (v.containerStatus + 1) % len(options)
-	if options[v.containerStatus] == "" {
-		v.containerStatus = (v.containerStatus + 1) % len(options)
-	}
-	setTableRows(options[v.containerStatus], v.containers)
+	freshContainers(containerOption(), v.containers)
 	v.ReRender()
 }
 
 func (v *View) OnSearch(e <-chan ui.Event) {
 	go v.search.Scan()
 	v.search.ListenKeyboard(e)
-	setTableRows(string(v.search.Stdin), v.containers)
+	freshContainers(string(v.search.Stdin), v.containers)
 	v.ReRender()
 }
 

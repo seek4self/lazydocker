@@ -25,14 +25,14 @@ type Table struct {
 	// ColumnResizer is called on each Draw. Can be used for custom column sizing.
 	ColumnResizer func()
 
-	Active           bool
-	Page             int
-	ActiveRowIndex   int
-	ActiveRowStyle   ui.Style
-	InactiveRowStyle ui.Style
-	RowTab           map[int]ui.Drawable
-	TabTitle         string
-	TabContent       func(string) []byte
+	active         bool
+	Page           int
+	ActiveRowIndex int
+	ActiveStyle    ui.Style
+	InactiveStyle  ui.Style
+	RowTab         map[int]ui.Drawable
+	TabTitle       string
+	TabContent     func(string) []byte
 
 	textAlignment ui.Alignment
 	x, y          int // drawing coordinate
@@ -40,14 +40,23 @@ type Table struct {
 
 func NewTable() *Table {
 	return &Table{
-		Block:            ui.NewBlock(),
-		TextStyle:        ui.Theme.Table.Text,
-		RowStyles:        make(map[int]ui.Style),
-		ColumnResizer:    func() {},
-		ActiveRowIndex:   0,
-		ActiveRowStyle:   ui.Theme.Tab.Active,
-		InactiveRowStyle: ui.Theme.Tab.Inactive,
+		Block:          ui.NewBlock(),
+		TextStyle:      ui.Theme.Table.Text,
+		RowStyles:      make(map[int]ui.Style),
+		ColumnResizer:  func() {},
+		ActiveRowIndex: 0,
+		ActiveStyle:    ui.NewStyle(51),
+		InactiveStyle:  ui.NewStyle(ui.ColorWhite),
 	}
+}
+
+func (t *Table) Active(style ui.Style) {
+	t.active = true
+	t.ActiveStyle = style
+}
+
+func (t *Table) InActive() {
+	t.active = false
 }
 
 func (t *Table) FocusDown() {
@@ -98,9 +107,15 @@ func (t *Table) PrePage() {
 }
 
 func (t *Table) Draw(buf *ui.Buffer) {
+	t.Block.BorderStyle = t.InactiveStyle
+	t.TitleStyle = t.InactiveStyle
+	if t.active {
+		t.Block.BorderStyle = t.ActiveStyle
+		t.TitleStyle = t.ActiveStyle
+	}
 	t.Block.Draw(buf)
 	t.drawTable(buf)
-	if t.Active && len(t.Rows) > 0 {
+	if t.active && len(t.Rows) > 0 {
 		t.drawTabPane(buf)
 		t.drawTabPage()
 	}
@@ -259,7 +274,7 @@ func (t *Table) drawTabPage() {
 	p := widgets.NewParagraph()
 	p.Text = string(t.TabContent(t.activeText()))
 	p.Title = t.TabTitle
-	p.SetRect(t.Inner.Max.X+3, 0, TerminalWidth, TerminalHeight-1)
+	p.SetRect(t.Inner.Max.X+1, 0, TerminalWidth, TerminalHeight-1)
 	ui.Render(p)
 }
 
@@ -278,7 +293,7 @@ func (t *Table) drawTabPane(buf *ui.Buffer) {
 	}
 	buf.SetString(
 		ui.TrimString(text, width),
-		t.ActiveRowStyle,
+		t.ActiveStyle,
 		image.Pt(t.Inner.Min.X+offset, yCoordinate),
 	)
 }
