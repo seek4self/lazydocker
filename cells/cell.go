@@ -8,4 +8,5 @@ type Cell interface {
 	InActive()
 	FocusUp()
 	FocusDown()
+	ActiveText() string
 }

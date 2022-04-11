@@ -11,6 +11,7 @@ type Navigation struct {
 	Text      string
 	TextStyle ui.Style
 	WrapText  bool
+	Rows      [][]ui.Cell
 
 	Header         []string
 	Target         string
@@ -19,7 +20,9 @@ type Navigation struct {
 	ActiveCol      int
 	ActiveStyle    ui.Style
 
-	x, y int
+	x, y       int
+	offset     int
+	TextHeight int
 }
 
 func NewNavigation() *Navigation {
@@ -35,24 +38,49 @@ func NewNavigation() *Navigation {
 
 func (n *Navigation) Draw(buf *ui.Buffer) {
 	n.Block.Draw(buf)
+	n.drawHeader(buf)
 
-	cells := ui.ParseStyles(n.Text, n.TextStyle)
-	if n.WrapText {
-		cells = ui.WrapCells(cells, uint(n.Inner.Dx()))
-	}
-
-	rows := ui.SplitCells(cells, '\n')
-
-	for y, row := range rows {
-		if y+n.Inner.Min.Y >= n.Inner.Max.Y {
-			break
-		}
-		row = ui.TrimCells(row, n.Inner.Dx())
+	for i := 0; i < n.visibleRows() && (i+n.offset) < n.totalRows(); i++ {
+		y := i + n.y
+		row := ui.TrimCells(n.Rows[i+n.offset], n.Inner.Dx())
 		for _, cx := range ui.BuildCellWithXArray(row) {
 			x, cell := cx.X, cx.Cell
 			buf.SetCell(cell, image.Pt(x, y).Add(n.Inner.Min))
 		}
 	}
+}
+
+func (n *Navigation) FreshContent(key, input string) {
+	n.Text = string(n.ContentHandler[key](input))
+	cells := ui.ParseStyles(n.Text, n.TextStyle)
+	if n.WrapText {
+		cells = ui.WrapCells(cells, uint(n.Inner.Dx()))
+	}
+	n.Rows = ui.SplitCells(cells, '\n')
+	n.offset = 0
+}
+
+func (n *Navigation) visibleRows() int {
+	return n.Inner.Dy() - 2
+}
+
+func (n *Navigation) totalRows() int {
+	return len(n.Rows)
+}
+
+func (n *Navigation) PageUp() {
+	if n.offset-n.visibleRows() <= 0 {
+		n.offset = 0
+		return
+	}
+	n.offset -= n.visibleRows() - 3
+}
+
+func (n *Navigation) PageDown() {
+	if n.offset+n.visibleRows() > n.totalRows() {
+		return
+	}
+	n.offset += n.visibleRows() - 3
 }
 
 func (n *Navigation) drawHeader(buf *ui.Buffer) {
@@ -70,4 +98,8 @@ func (n *Navigation) drawHeader(buf *ui.Buffer) {
 		}
 		n.x += len(n.Header[i]) + 5
 	}
+	n.y++
+	n.x = n.Inner.Min.X
+	horizontalCell := ui.NewCell(ui.HORIZONTAL_LINE, n.Block.BorderStyle)
+	buf.Fill(horizontalCell, image.Rect(n.Inner.Min.X, n.y, n.Inner.Max.X, n.y+1))
 }

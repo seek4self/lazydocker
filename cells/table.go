@@ -81,7 +81,7 @@ func (t *Table) activeRow() int {
 	return t.ActiveRowIndex + t.Page*t.rowsCount()
 }
 
-func (t *Table) activeText() string {
+func (t *Table) ActiveText() string {
 	return t.Rows[t.activeRow()][0]
 }
 
@@ -121,9 +121,9 @@ func (t *Table) Draw(buf *ui.Buffer) {
 	}
 	t.Block.Draw(buf)
 	t.drawTable(buf)
-	if t.active && len(t.Rows) > 0 {
-		t.drawTabPage()
-	}
+	// if t.active && len(t.Rows) > 0 {
+	// 	t.drawTabPage()
+	// }
 }
 
 func (t *Table) height() int {
@@ -283,7 +283,7 @@ func (t *Table) drawTable(buf *ui.Buffer) {
 }
 
 func (t *Table) drawTabPage() {
-	t.tabPage.Text = string(t.TabContent(t.activeText()))
+	t.tabPage.Text = string(t.TabContent(t.ActiveText()))
 	t.tabPage.Title = t.TabTitle
 	t.tabPage.SetRect(t.Inner.Max.X+1, 0, TerminalWidth, TerminalHeight-1)
 	ui.Render(t.tabPage)
