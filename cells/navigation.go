@@ -20,6 +20,7 @@ type Navigation struct {
 	ActiveCol      int
 	ActiveStyle    ui.Style
 
+	input      string
 	x, y       int
 	offset     int
 	TextHeight int
@@ -50,13 +51,22 @@ func (n *Navigation) Draw(buf *ui.Buffer) {
 	}
 }
 
-func (n *Navigation) FreshContent(key, input string) {
-	n.Text = string(n.ContentHandler[key](input))
+func (n *Navigation) parseText() {
 	cells := ui.ParseStyles(n.Text, n.TextStyle)
 	if n.WrapText {
 		cells = ui.WrapCells(cells, uint(n.Inner.Dx()))
 	}
 	n.Rows = ui.SplitCells(cells, '\n')
+}
+
+func (n *Navigation) FreshContent(key, input string) {
+	n.input = input
+	if n.ActiveCol > 0 {
+		n.handler()
+		return
+	}
+	n.Text = string(n.ContentHandler[key](input))
+	n.parseText()
 	n.offset = 0
 }
 
@@ -83,11 +93,40 @@ func (n *Navigation) PageDown() {
 	n.offset += n.visibleRows() - 3
 }
 
+func (n *Navigation) FocusRight() {
+	if n.ActiveCol+1 == len(n.Header) {
+		return
+	}
+	n.ActiveCol++
+	n.handler()
+}
+
+func (n *Navigation) handler() {
+	key := n.Header[n.ActiveCol]
+	if f, ok := n.ContentHandler[key]; ok && n.ActiveCol > 0 {
+		n.Text = string(f(n.input))
+		n.parseText()
+	}
+	n.offset = 0
+}
+
+func (n *Navigation) FocusLeft() {
+	if n.ActiveCol == 0 {
+		return
+	}
+	n.ActiveCol--
+	n.handler()
+}
+
 func (n *Navigation) drawHeader(buf *ui.Buffer) {
 	n.x = n.Inner.Min.X
 	n.y = n.Inner.Min.Y
 	for i := 0; i < len(n.Header); i++ {
-		col := ui.ParseStyles(n.Header[i], n.TextStyle)
+		style := n.TextStyle
+		if i == n.ActiveCol {
+			style = n.ActiveStyle
+		}
+		col := ui.ParseStyles(n.Header[i], style)
 		for _, cx := range ui.BuildCellWithXArray(col) {
 			if cx.X == n.Inner.Dx() || n.x+cx.X == n.Inner.Max.X {
 				cx.Cell.Rune = ui.ELLIPSES

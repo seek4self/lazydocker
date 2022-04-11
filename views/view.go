@@ -46,6 +46,7 @@ func (v *View) Init() *View {
 	v.navigation.ContentHandler = map[string]func(string) []byte{
 		"container": docker.ContainerInspect,
 		"image":     docker.ImageInspect,
+		"log":       docker.Logs,
 	}
 	v.navigation.SetRect(v.containers.Inner.Max.X+1, 0, cells.TerminalWidth, cells.TerminalHeight-1)
 	v.navigation.FreshContent("container", v.containers.ActiveText())
@@ -71,7 +72,11 @@ func (v *View) Render() {
 		case "j", "<Down>":
 			v.OnDown()
 		case "h", "<Left>":
+			v.navigation.FocusLeft()
+			ui.Render(v.navigation)
 		case "l", "<Right>":
+			v.navigation.FocusRight()
+			ui.Render(v.navigation)
 		case "<PageUp>":
 			v.navigation.PageUp()
 			ui.Render(v.navigation)
@@ -102,6 +107,7 @@ func (v *View) OnResize(size ui.Resize) {
 	v.images.ResetSize(0, cells.TerminalHeight/2, 50, cells.TerminalHeight-1)
 	v.keys.SetRect(0, cells.TerminalHeight-1, cells.TerminalWidth, cells.TerminalHeight)
 	v.navigation.SetRect(v.containers.Inner.Max.X+1, 0, cells.TerminalWidth, cells.TerminalHeight-1)
+	v.navigation.FreshContent("container", v.containers.ActiveText())
 	v.ReRender()
 }
 
