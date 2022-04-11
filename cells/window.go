@@ -1,14 +1,14 @@
 package cells
 
-import "github.com/olekukonko/ts"
+import (
+	ui "github.com/gizak/termui/v3"
+)
 
 var (
 	TerminalWidth  int
 	TerminalHeight int
 )
 
-func init() {
-	size, _ := ts.GetSize()
-	TerminalWidth = size.Col()
-	TerminalHeight = size.Row()
+func InitTerminal() {
+	TerminalWidth, TerminalHeight = ui.TerminalDimensions()
 }

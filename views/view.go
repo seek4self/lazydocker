@@ -19,6 +19,7 @@ type View struct {
 }
 
 func NewView() *View {
+	cells.InitTerminal()
 	return &View{
 		containers:  cells.NewTable(),
 		images:      cells.NewTable(),
