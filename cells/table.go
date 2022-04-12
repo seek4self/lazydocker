@@ -1,6 +1,7 @@
 package cells
 
 import (
+	"fmt"
 	"image"
 	"math"
 
@@ -121,6 +122,7 @@ func (t *Table) Draw(buf *ui.Buffer) {
 	}
 	t.Block.Draw(buf)
 	t.drawTable(buf)
+	t.drawProgress(buf)
 	// if t.active && len(t.Rows) > 0 {
 	// 	t.drawTabPage()
 	// }
@@ -287,4 +289,29 @@ func (t *Table) drawTabPage() {
 	t.tabPage.Title = t.TabTitle
 	t.tabPage.SetRect(t.Inner.Max.X+1, 0, TerminalWidth, TerminalHeight-1)
 	ui.Render(t.tabPage)
+}
+
+func (t *Table) progress() string {
+	if t.totalPage() == 1 {
+		return "Bot"
+	}
+	if t.Page == 0 {
+		return "Top"
+	}
+	progress := float64(t.Page+1) / float64(t.totalPage()) * 100
+	if progress == 100 {
+		return "Bot"
+	}
+	return fmt.Sprintf("%.0f%%", progress)
+}
+
+func (t *Table) drawProgress(buf *ui.Buffer) {
+	style := t.TextStyle
+	if t.active {
+		style = t.ActiveStyle
+	}
+	col := ui.ParseStyles(t.progress(), style)
+	for _, cx := range ui.BuildCellWithXArray(col) {
+		buf.SetCell(cx.Cell, image.Pt(t.Max.X-5+cx.X, t.Inner.Max.Y))
+	}
 }

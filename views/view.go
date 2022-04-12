@@ -42,7 +42,7 @@ func (v *View) Init() *View {
 	initContainers(v)
 	initSearch(v)
 	initImages(v)
-	v.navigation.Header = []string{"info", "log", "memory"}
+	v.navigation.Header = []string{"container", "log", "memory"}
 	v.navigation.ContentHandler = map[string]func(string) []byte{
 		"container": docker.ContainerInspect,
 		"image":     docker.ImageInspect,
@@ -64,7 +64,7 @@ func (v *View) Render() {
 		case "q", "<C-c>":
 			return
 		case "<Tab>":
-			v.OnActive()
+			v.OnSwitch()
 		case "<Resize>":
 			v.OnResize(e.Payload.(ui.Resize))
 		case "k", "<Up>":
@@ -91,7 +91,7 @@ func (v *View) Render() {
 	}
 }
 
-func (v *View) OnActive() {
+func (v *View) OnSwitch() {
 	for i := range v.activeSort {
 		v.activeSort[i].InActive()
 	}

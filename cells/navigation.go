@@ -1,6 +1,7 @@
 package cells
 
 import (
+	"fmt"
 	"image"
 
 	ui "github.com/gizak/termui/v3"
@@ -40,6 +41,7 @@ func NewNavigation() *Navigation {
 func (n *Navigation) Draw(buf *ui.Buffer) {
 	n.Block.Draw(buf)
 	n.drawHeader(buf)
+	n.drawProgress(buf)
 
 	for i := 0; i < n.visibleRows() && (i+n.offset) < n.totalRows(); i++ {
 		y := i + n.y
@@ -103,7 +105,7 @@ func (n *Navigation) FocusRight() {
 
 func (n *Navigation) handler() {
 	key := n.Header[n.ActiveCol]
-	if f, ok := n.ContentHandler[key]; ok && n.ActiveCol > 0 {
+	if f, ok := n.ContentHandler[key]; ok {
 		n.Text = string(f(n.input))
 		n.parseText()
 	}
@@ -141,4 +143,25 @@ func (n *Navigation) drawHeader(buf *ui.Buffer) {
 	n.x = n.Inner.Min.X
 	horizontalCell := ui.NewCell(ui.HORIZONTAL_LINE, n.Block.BorderStyle)
 	buf.Fill(horizontalCell, image.Rect(n.Inner.Min.X, n.y, n.Inner.Max.X, n.y+1))
+}
+
+func (n *Navigation) progress() string {
+	if n.offset+n.visibleRows() >= n.totalRows() {
+		return "Bot"
+	}
+	if n.offset == 0 {
+		return "Top"
+	}
+	progress := float64(n.offset+1) / float64(n.totalRows()) * 100
+	if progress == 100 {
+		return "Bot"
+	}
+	return fmt.Sprintf("%.0f%%", progress)
+}
+
+func (n *Navigation) drawProgress(buf *ui.Buffer) {
+	col := ui.ParseStyles(n.progress(), n.TextStyle)
+	for _, cx := range ui.BuildCellWithXArray(col) {
+		buf.SetCell(cx.Cell, image.Pt(n.Max.X-5+cx.X, n.Inner.Max.Y))
+	}
 }
