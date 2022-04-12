@@ -53,23 +53,17 @@ func (n *Navigation) Draw(buf *ui.Buffer) {
 	}
 }
 
-func (n *Navigation) parseText() {
-	cells := ui.ParseStyles(n.Text, n.TextStyle)
+func (n *Navigation) parseText(text []byte) {
+	cells := ui.ParseStyles(string(text), n.TextStyle)
 	if n.WrapText {
 		cells = ui.WrapCells(cells, uint(n.Inner.Dx()))
 	}
 	n.Rows = ui.SplitCells(cells, '\n')
 }
 
-func (n *Navigation) FreshContent(key, input string) {
+func (n *Navigation) FreshContent(input string) {
 	n.input = input
-	if n.ActiveCol > 0 {
-		n.handler()
-		return
-	}
-	n.Text = string(n.ContentHandler[key](input))
-	n.parseText()
-	n.offset = 0
+	n.getContent()
 }
 
 func (n *Navigation) visibleRows() int {
@@ -100,14 +94,13 @@ func (n *Navigation) FocusRight() {
 		return
 	}
 	n.ActiveCol++
-	n.handler()
+	n.getContent()
 }
 
-func (n *Navigation) handler() {
+func (n *Navigation) getContent() {
 	key := n.Header[n.ActiveCol]
-	if f, ok := n.ContentHandler[key]; ok {
-		n.Text = string(f(n.input))
-		n.parseText()
+	if getContent, ok := n.ContentHandler[key]; ok {
+		n.parseText(getContent(n.input))
 	}
 	n.offset = 0
 }
@@ -117,7 +110,7 @@ func (n *Navigation) FocusLeft() {
 		return
 	}
 	n.ActiveCol--
-	n.handler()
+	n.getContent()
 }
 
 func (n *Navigation) drawHeader(buf *ui.Buffer) {
