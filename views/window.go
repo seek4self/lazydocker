@@ -1,4 +1,4 @@
-package cells
+package views
 
 import (
 	ui "github.com/gizak/termui/v3"

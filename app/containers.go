@@ -1,8 +1,8 @@
-package views
+package app
 
 import (
-	"lazydocker/cells"
 	"lazydocker/docker"
+	"lazydocker/views"
 	"strings"
 
 	ui "github.com/gizak/termui/v3"
@@ -25,7 +25,7 @@ func containerOption() string {
 	return options[currentStatus]
 }
 
-func freshContainers(option string, table *cells.Table) {
+func freshContainers(option string, table *views.Table) {
 	table.Rows = make([][]string, 0)
 	status := docker.PS(option)
 	for _, s := range status {
@@ -36,19 +36,19 @@ func freshContainers(option string, table *cells.Table) {
 		// }
 		table.Rows = append(table.Rows, []string{s.Name, s.Status, s.Age})
 	}
-	table.ResetSize(0, 0, 50, cells.TerminalHeight/2)
+	table.ResetSize(0, 0, 50, views.TerminalHeight/2)
 	table.Title = strings.Join([]string{"Containers ", option}, ": ")
 }
 
-func initContainers(v *View) {
-	v.containers.Header = []string{"Name", "Status", "Age"}
+func initContainers(a *App) {
+	a.containers.Header = []string{"Name", "Status", "Age"}
 	// table.Rows = append(table.Rows, []string{"dms", "Exited", "--"})
 	// table.Rows = append(table.Rows, []string{"ums", "Up", "3 days"})
 	// table.Rows = append(table.Rows, []string{"gws", "Up", "3 days"})
-	freshContainers(docker.OptRuning, v.containers)
-	v.containers.ColumnWidths = []int{35, 8, 5}
-	v.containers.ColumnAlignment = []ui.Alignment{ui.AlignLeft, ui.AlignLeft, ui.AlignRight}
-	v.containers.TextStyle = ui.NewStyle(ui.ColorWhite)
-	v.containers.TabTitle = "Container info"
-	v.containers.TabContent = docker.ContainerInspect
+	freshContainers(docker.OptRuning, a.containers)
+	a.containers.ColumnWidths = []int{35, 8, 5}
+	a.containers.ColumnAlignment = []ui.Alignment{ui.AlignLeft, ui.AlignLeft, ui.AlignRight}
+	a.containers.TextStyle = ui.NewStyle(ui.ColorWhite)
+	a.containers.TabTitle = "Container info"
+	a.containers.TabContent = docker.ContainerInspect
 }

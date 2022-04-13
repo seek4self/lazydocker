@@ -1,7 +1,7 @@
 package main
 
 import (
-	"lazydocker/views"
+	"lazydocker/app"
 	"log"
 
 	ui "github.com/gizak/termui/v3"
@@ -13,5 +13,5 @@ func main() {
 	}
 	defer ui.Close()
 
-	views.NewView().Init().Render()
+	app.NewApp().Init().Render()
 }

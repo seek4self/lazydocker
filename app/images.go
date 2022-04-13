@@ -1,9 +1,9 @@
-package views
+package app
 
 import (
 	"fmt"
-	"lazydocker/cells"
 	"lazydocker/docker"
+	"lazydocker/views"
 	"strings"
 	"time"
 
@@ -18,7 +18,7 @@ const (
 	TB = GB << 10
 )
 
-func freshImages(option string, table *cells.Table) {
+func freshImages(option string, table *views.Table) {
 	table.Rows = make([][]string, 0)
 	images := docker.Images(option)
 	for _, i := range images {
@@ -28,18 +28,18 @@ func freshImages(option string, table *cells.Table) {
 			parseSize(i.Size),
 		})
 	}
-	table.ResetSize(0, cells.TerminalHeight/2, 50, cells.TerminalHeight-1)
+	table.ResetSize(0, views.TerminalHeight/2, 50, views.TerminalHeight-1)
 	table.Title = strings.Join([]string{"Images ", option}, ": ")
 }
 
-func initImages(v *View) {
-	v.images.Header = []string{"ImageID", "Created", "Size"}
-	v.images.Rows = make([][]string, 0)
-	freshImages("", v.images)
-	v.images.ColumnWidths = []int{16, 24, 8}
-	v.images.ColumnAlignment = []ui.Alignment{ui.AlignLeft, ui.AlignLeft, ui.AlignRight}
-	v.images.TabTitle = "Image info"
-	v.images.TabContent = docker.ImageInspect
+func initImages(a *App) {
+	a.images.Header = []string{"ImageID", "Created", "Size"}
+	a.images.Rows = make([][]string, 0)
+	freshImages("", a.images)
+	a.images.ColumnWidths = []int{16, 24, 8}
+	a.images.ColumnAlignment = []ui.Alignment{ui.AlignLeft, ui.AlignLeft, ui.AlignRight}
+	a.images.TabTitle = "Image info"
+	a.images.TabContent = docker.ImageInspect
 }
 
 func parseSize(size int64) string {
