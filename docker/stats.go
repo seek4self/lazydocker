@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"lazydocker/views"
 	"sync"
 
 	"github.com/docker/docker/api/types"
@@ -74,6 +75,7 @@ func (s *ContainerStats) getUsage() Usage {
 		usage.Memory[i] = s.Memory[index]
 		usage.CPU[i] = s.CPU[index]
 	}
+	// fmt.Println("          ", usage.CPU)
 	return usage
 }
 
@@ -83,12 +85,14 @@ func (s *ContainerStats) plot() []byte {
 	buf.WriteString(asciigraph.Plot(usage.CPU,
 		asciigraph.Caption("cpu usage"),
 		asciigraph.Offset(5),
+		asciigraph.Height((views.TerminalHeight-10)/2),
 	))
 	buf.WriteRune('\n')
 	buf.WriteRune('\n')
 	buf.WriteString(asciigraph.Plot(usage.Memory,
 		asciigraph.Caption("memory usage"),
 		asciigraph.Offset(5),
+		asciigraph.Height((views.TerminalHeight-10)/2),
 	))
 	return buf.Bytes()
 }
@@ -112,11 +116,19 @@ func (s *ContainerStats) parseStats(body io.ReadCloser) {
 		_ = json.Unmarshal(bytes, &stats)
 		cstats.MUsed = stats.MemoryStats.Usage - stats.MemoryStats.Stats["cache"]
 		cstats.MAvailable = stats.MemoryStats.Limit
-		cstats.Memory[s.index] = float64(cstats.MUsed) / float64(cstats.MAvailable) * 100.0
-		cstats.CPU[s.index] = float64(stats.CPUStats.CPUUsage.TotalUsage-stats.PreCPUStats.CPUUsage.TotalUsage) /
-			float64(stats.CPUStats.SystemUsage-stats.PreCPUStats.SystemUsage) *
-			float64(stats.CPUStats.OnlineCPUs) * 100.0
+		if cstats.MAvailable == 0 {
+			cstats.Memory[s.index] = 0
+		} else {
+			cstats.Memory[s.index] = float64(cstats.MUsed) / float64(cstats.MAvailable) * 100.0
+		}
+		cpuDelta := float64(stats.CPUStats.CPUUsage.TotalUsage - stats.PreCPUStats.CPUUsage.TotalUsage)
+		sysCPUDelta := float64(stats.CPUStats.SystemUsage - stats.PreCPUStats.SystemUsage)
+		if sysCPUDelta == 0 {
+			cstats.CPU[s.index] = 0
+		} else {
+			cstats.CPU[s.index] = cpuDelta / sysCPUDelta * float64(stats.CPUStats.OnlineCPUs) * 100.0
+		}
+		// fmt.Println(cstats)
 		s.l.Unlock()
-		// fmt.Println(s)
 	}
 }

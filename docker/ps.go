@@ -64,7 +64,11 @@ func parseAge(status string) string {
 	}
 	fields := strings.Fields(status)
 	subfix := duration[fields[len(fields)-1]]
-	return strings.Join([]string{fields[len(fields)-2], subfix}, "")
+	age := fields[len(fields)-2]
+	if age[0] == 'a' {
+		age = "1"
+	}
+	return strings.Join([]string{age, subfix}, "")
 }
 
 func parseFileter(option string) (options types.ContainerListOptions) {
