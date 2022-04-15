@@ -3,9 +3,21 @@ package views
 import (
 	"fmt"
 	"image"
+	"time"
 
 	ui "github.com/gizak/termui/v3"
 )
+
+type Header struct {
+	Name     string
+	Fresh    bool
+	WrapText bool
+	Detail   func(string) []byte
+}
+
+func (h Header) len() int {
+	return len(h.Name)
+}
 
 type Navigation struct {
 	*ui.Block
@@ -14,28 +26,32 @@ type Navigation struct {
 	WrapText  bool
 	Rows      [][]ui.Cell
 
-	Header         []string
-	Target         string
-	ContentHandler map[string]func(string) []byte
-	Active         bool
-	ActiveCol      int
-	ActiveStyle    ui.Style
+	Header      [][]Header
+	Target      string
+	Active      bool
+	ActiveCol   int
+	activeRow   int
+	ActiveStyle ui.Style
 
 	input      string
 	x, y       int
 	offset     int
+	ticker     *time.Ticker
 	TextHeight int
 }
 
 func NewNavigation() *Navigation {
-	return &Navigation{
-		Block:          ui.NewBlock(),
-		TextStyle:      ui.Theme.Paragraph.Text,
-		WrapText:       true,
-		ContentHandler: make(map[string]func(string) []byte),
+	n := &Navigation{
+		Block:     ui.NewBlock(),
+		TextStyle: ui.Theme.Paragraph.Text,
+		WrapText:  true,
 
 		ActiveStyle: ui.NewStyle(51),
+
+		ticker: time.NewTicker(1 * time.Second),
 	}
+	go n.freshContent()
+	return n
 }
 
 func (n *Navigation) Draw(buf *ui.Buffer) {
@@ -55,15 +71,23 @@ func (n *Navigation) Draw(buf *ui.Buffer) {
 
 func (n *Navigation) parseText(text []byte) {
 	cells := ui.ParseStyles(string(text), n.TextStyle)
-	if n.WrapText {
+	if n.currentHeader().WrapText {
 		cells = ui.WrapCells(cells, uint(n.Inner.Dx()))
 	}
 	n.Rows = ui.SplitCells(cells, '\n')
 }
 
-func (n *Navigation) FreshContent(input string) {
+func (n *Navigation) Fresh(input string, active int) {
 	n.input = input
+	n.activeRow = active
+	if n.ActiveCol > len(n.Header[n.activeRow])-1 {
+		n.ActiveCol = 0
+	}
 	n.getContent()
+}
+
+func (n *Navigation) currentHeader() Header {
+	return n.Header[n.activeRow][n.ActiveCol]
 }
 
 func (n *Navigation) visibleRows() int {
@@ -90,7 +114,7 @@ func (n *Navigation) PageDown() {
 }
 
 func (n *Navigation) FocusRight() {
-	if n.ActiveCol+1 == len(n.Header) {
+	if n.ActiveCol+1 == len(n.Header[n.activeRow]) {
 		return
 	}
 	n.ActiveCol++
@@ -98,10 +122,7 @@ func (n *Navigation) FocusRight() {
 }
 
 func (n *Navigation) getContent() {
-	key := n.Header[n.ActiveCol]
-	if getContent, ok := n.ContentHandler[key]; ok {
-		n.parseText(getContent(n.input))
-	}
+	n.parseText(n.currentHeader().Detail(n.input))
 	n.offset = 0
 }
 
@@ -116,12 +137,12 @@ func (n *Navigation) FocusLeft() {
 func (n *Navigation) drawHeader(buf *ui.Buffer) {
 	n.x = n.Inner.Min.X
 	n.y = n.Inner.Min.Y
-	for i := 0; i < len(n.Header); i++ {
+	for i, header := range n.Header[n.activeRow] {
 		style := n.TextStyle
 		if i == n.ActiveCol {
 			style = n.ActiveStyle
 		}
-		col := ui.ParseStyles(n.Header[i], style)
+		col := ui.ParseStyles(header.Name, style)
 		for _, cx := range ui.BuildCellWithXArray(col) {
 			if cx.X == n.Inner.Dx() || n.x+cx.X == n.Inner.Max.X {
 				cx.Cell.Rune = ui.ELLIPSES
@@ -130,7 +151,7 @@ func (n *Navigation) drawHeader(buf *ui.Buffer) {
 			}
 			buf.SetCell(cx.Cell, image.Pt(n.x+cx.X, n.y))
 		}
-		n.x += len(n.Header[i]) + 5
+		n.x += header.len() + 5
 	}
 	n.y++
 	n.x = n.Inner.Min.X
@@ -156,5 +177,20 @@ func (n *Navigation) drawProgress(buf *ui.Buffer) {
 	col := ui.ParseStyles(n.progress(), n.TextStyle)
 	for _, cx := range ui.BuildCellWithXArray(col) {
 		buf.SetCell(cx.Cell, image.Pt(n.Max.X-5+cx.X, n.Inner.Max.Y))
+	}
+}
+
+func (n *Navigation) freshContent() {
+	n.ticker.Reset(1 * time.Second)
+	defer n.ticker.Stop()
+	for {
+		select {
+		case <-n.ticker.C:
+			if !n.currentHeader().Fresh {
+				break
+			}
+			n.getContent()
+			ui.Render(n)
+		}
 	}
 }

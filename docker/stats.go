@@ -2,12 +2,14 @@ package docker
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
 	"sync"
 
 	"github.com/docker/docker/api/types"
+	"github.com/guptarohit/asciigraph"
 )
 
 const cache = 60
@@ -43,9 +45,9 @@ func (s *ContainerStats) clear() {
 	s.stop = make(chan struct{})
 }
 
-func Stats(container string) Usage {
+func Stats(container string) []byte {
 	if cstats.name == container {
-		return cstats.getUsage()
+		return cstats.plot()
 	}
 	cstats.clear()
 	stats, err := cli.ContainerStats(context.Background(), container, true)
@@ -54,12 +56,7 @@ func Stats(container string) Usage {
 	}
 	cstats.name = container
 	go cstats.parseStats(stats.Body)
-	// buf, err := io.ReadAll(stats.Body)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Println(string(buf))
-	return cstats.getUsage()
+	return cstats.plot()
 }
 
 func (s *ContainerStats) getUsage() Usage {
@@ -78,6 +75,22 @@ func (s *ContainerStats) getUsage() Usage {
 		usage.CPU[i] = s.CPU[index]
 	}
 	return usage
+}
+
+func (s *ContainerStats) plot() []byte {
+	usage := s.getUsage()
+	buf := &bytes.Buffer{}
+	buf.WriteString(asciigraph.Plot(usage.CPU,
+		asciigraph.Caption("cpu usage"),
+		asciigraph.Offset(5),
+	))
+	buf.WriteRune('\n')
+	buf.WriteRune('\n')
+	buf.WriteString(asciigraph.Plot(usage.Memory,
+		asciigraph.Caption("memory usage"),
+		asciigraph.Offset(5),
+	))
+	return buf.Bytes()
 }
 
 func (s *ContainerStats) parseStats(body io.ReadCloser) {

@@ -6,6 +6,7 @@ require (
 	github.com/docker/docker v20.10.14+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/gizak/termui/v3 v3.1.0
+	github.com/guptarohit/asciigraph v0.5.3
 )
 
 require (
