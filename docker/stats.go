@@ -95,7 +95,8 @@ func (s *ContainerStats) getUsage() {
 
 func (s *ContainerStats) plot() []byte {
 	s.getUsage()
-	buf := &bytes.Buffer{}
+	buf := bufPool.Get().(*bytes.Buffer)
+	defer resetBuf(buf)
 	buf.WriteString(asciigraph.Plot(s.out.CPU,
 		asciigraph.Caption("cpu usage"),
 		asciigraph.Offset(5),

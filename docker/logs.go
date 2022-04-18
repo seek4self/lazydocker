@@ -18,8 +18,8 @@ func Logs(container string) []byte {
 	if err != nil {
 		return []byte(err.Error())
 	}
-	// r := bufio.NewReader(body)
-	buf := bytes.Buffer{}
+	buf := bufPool.Get().(*bytes.Buffer)
+	defer resetBuf(buf)
 	header := make([]byte, 8)
 	for {
 		n, err := io.ReadFull(body, header)
@@ -44,6 +44,5 @@ func Logs(container string) []byte {
 		}
 		buf.Write(frame)
 	}
-	// buf, _ := io.ReadAll(body)
 	return buf.Bytes()
 }

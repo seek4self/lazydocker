@@ -1,8 +1,15 @@
 package docker
 
-import "github.com/docker/docker/client"
+import (
+	"bytes"
+	"sync"
+
+	"github.com/docker/docker/client"
+)
 
 var cli *client.Client
+
+var bufPool = &sync.Pool{New: func() interface{} { return bytes.NewBuffer(nil) }}
 
 func init() {
 	var err error
@@ -10,4 +17,9 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func resetBuf(buf *bytes.Buffer) {
+	buf.Reset()
+	bufPool.Put(buf)
 }
