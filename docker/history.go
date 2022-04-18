@@ -8,7 +8,7 @@ import (
 func History(imageID string) []byte {
 	history, err := cli.ImageHistory(context.Background(), imageID)
 	if err != nil {
-		panic(err)
+		return []byte(err.Error())
 	}
 	buf, _ := json.MarshalIndent(history, "", "    ")
 	return buf

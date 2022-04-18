@@ -58,7 +58,7 @@ type ContainerInfo struct {
 func ContainerInspect(name string) []byte {
 	_, raw, err := cli.ContainerInspectWithRaw(context.Background(), name, false)
 	if err != nil {
-		panic(err)
+		return []byte(err.Error())
 	}
 	var info ContainerInfo
 	_ = json.Unmarshal(raw, &info)
@@ -99,7 +99,7 @@ type ImageInfo struct {
 func ImageInspect(id string) []byte {
 	_, raw, err := cli.ImageInspectWithRaw(context.Background(), id)
 	if err != nil {
-		panic(err)
+		return []byte(err.Error())
 	}
 	var info ImageInfo
 	_ = json.Unmarshal(raw, &info)
