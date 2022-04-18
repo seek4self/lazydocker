@@ -22,26 +22,43 @@ type Usage struct {
 	CPU        []float64 // cpu usage
 }
 
+func newUsage() *Usage {
+	return &Usage{
+		Memory: make([]float64, cache),
+		CPU:    make([]float64, cache),
+	}
+}
+
+func (u *Usage) clean() {
+	for i := 0; i < cache; i++ {
+		u.Memory[i] = 0
+		u.CPU[i] = 0
+	}
+	u.MUsed = 0
+	u.MAvailable = 0
+}
+
 type ContainerStats struct {
-	Usage
+	*Usage
 
 	l     *sync.Mutex
 	name  string
 	index int
 	stop  chan struct{}
+	out   *Usage // output data
 }
 
 var cstats = ContainerStats{
-	l:    &sync.Mutex{},
-	stop: make(chan struct{}),
+	l:     &sync.Mutex{},
+	stop:  make(chan struct{}),
+	Usage: newUsage(),
+	out:   newUsage(),
 }
 
 func (s *ContainerStats) clear() {
 	close(s.stop)
-	s.CPU = make([]float64, cache)
-	s.Memory = make([]float64, cache)
-	s.MAvailable = 0
-	s.MUsed = 0
+	s.Usage.clean()
+	s.out.clean()
 	s.index = cache - 1
 	s.stop = make(chan struct{})
 }
@@ -60,36 +77,32 @@ func Stats(container string) []byte {
 	return cstats.plot()
 }
 
-func (s *ContainerStats) getUsage() Usage {
+func (s *ContainerStats) getUsage() {
 	s.l.Lock()
 	defer s.l.Unlock()
-	usage := Usage{
-		Memory: make([]float64, cache),
-		CPU:    make([]float64, cache),
-	}
-	usage.MUsed = s.MUsed
-	usage.MAvailable = s.MAvailable
+	s.out.MUsed = s.MUsed
+	s.out.MAvailable = s.MAvailable
 	index := s.index
 	for i := 0; i < cache; i++ {
 		index = (index + 1) % cache
-		usage.Memory[i] = s.Memory[index]
-		usage.CPU[i] = s.CPU[index]
+		s.out.Memory[i] = s.Memory[index]
+		s.out.CPU[i] = s.CPU[index]
 	}
 	// fmt.Println("          ", usage.CPU)
-	return usage
+	return
 }
 
 func (s *ContainerStats) plot() []byte {
-	usage := s.getUsage()
+	s.getUsage()
 	buf := &bytes.Buffer{}
-	buf.WriteString(asciigraph.Plot(usage.CPU,
+	buf.WriteString(asciigraph.Plot(s.out.CPU,
 		asciigraph.Caption("cpu usage"),
 		asciigraph.Offset(5),
 		asciigraph.Height((views.TerminalHeight-10)/2),
 	))
 	buf.WriteRune('\n')
 	buf.WriteRune('\n')
-	buf.WriteString(asciigraph.Plot(usage.Memory,
+	buf.WriteString(asciigraph.Plot(s.out.Memory,
 		asciigraph.Caption("memory usage"),
 		asciigraph.Offset(5),
 		asciigraph.Height((views.TerminalHeight-10)/2),
