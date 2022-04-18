@@ -43,24 +43,24 @@ type ContainerStats struct {
 
 	l     *sync.Mutex
 	name  string
+	body  io.ReadCloser
 	index int
-	stop  chan struct{}
 	out   *Usage // output data
 }
 
 var cstats = ContainerStats{
 	l:     &sync.Mutex{},
-	stop:  make(chan struct{}),
 	Usage: newUsage(),
 	out:   newUsage(),
 }
 
 func (s *ContainerStats) clear() {
-	close(s.stop)
+	if s.body != nil {
+		s.body.Close()
+	}
 	s.Usage.clean()
 	s.out.clean()
 	s.index = cache - 1
-	s.stop = make(chan struct{})
 }
 
 func Stats(container string) []byte {
@@ -73,7 +73,8 @@ func Stats(container string) []byte {
 		panic(err)
 	}
 	cstats.name = container
-	go cstats.parseStats(stats.Body)
+	cstats.body = stats.Body
+	go cstats.parseStats()
 	return cstats.plot()
 }
 
@@ -110,17 +111,11 @@ func (s *ContainerStats) plot() []byte {
 	return buf.Bytes()
 }
 
-func (s *ContainerStats) parseStats(body io.ReadCloser) {
-	r := bufio.NewReader(body)
-	defer body.Close()
+func (s *ContainerStats) parseStats() {
+	r := bufio.NewReader(s.body)
 	for {
-		select {
-		case <-s.stop:
-			return
-		default:
-		}
 		bytes, err := r.ReadBytes('\n')
-		if err == io.EOF {
+		if err != nil {
 			return
 		}
 		s.l.Lock()
