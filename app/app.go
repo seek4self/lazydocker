@@ -116,6 +116,7 @@ func (a *App) OnDown() {
 func (a *App) OnSwithStatus() {
 	if a.activeIndex == 0 {
 		freshContainers(containerOption(), a.containers)
+		a.navigation.Fresh(a.containers.ActiveText(), a.activeIndex)
 		a.ReRender()
 	}
 }

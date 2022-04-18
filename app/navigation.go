@@ -16,7 +16,7 @@ const (
 var (
 	headerContainer = []views.Header{
 		{Name: containerInfo, WrapText: true, Detail: docker.ContainerInspect},
-		{Name: containerLog, WrapText: true, Detail: docker.Logs},
+		{Name: containerLog, WrapText: true, BotUp: true, Detail: docker.Logs},
 		{Name: containerStats, Fresh: true, Detail: docker.Stats},
 	}
 	headerImage = []views.Header{

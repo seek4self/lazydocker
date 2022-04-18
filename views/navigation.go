@@ -12,6 +12,7 @@ type Header struct {
 	Name     string
 	Fresh    bool
 	WrapText bool
+	BotUp    bool // bottom-up
 	Detail   func(string) []byte
 }
 
@@ -124,6 +125,9 @@ func (n *Navigation) FocusRight() {
 func (n *Navigation) getContent() {
 	n.parseText(n.currentHeader().Detail(n.input))
 	n.offset = 0
+	if n.currentHeader().BotUp {
+		n.offset = n.totalRows() - n.visibleRows() + 1
+	}
 }
 
 func (n *Navigation) FocusLeft() {

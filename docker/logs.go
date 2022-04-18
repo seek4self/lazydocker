@@ -3,9 +3,10 @@ package docker
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
+	"io"
 
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/pkg/stdcopy"
 )
 
 func Logs(container string) []byte {
@@ -15,20 +16,34 @@ func Logs(container string) []byte {
 		Tail:       "500",
 	})
 	if err != nil {
-		panic(err)
+		return []byte(err.Error())
 	}
-
-	stderr := bytes.Buffer{}
-	stdout := bytes.Buffer{}
-	n, err := stdcopy.StdCopy(&stdout, &stderr, body)
-	if n == 0 {
-		return nil
+	// r := bufio.NewReader(body)
+	buf := bytes.Buffer{}
+	header := make([]byte, 8)
+	for {
+		n, err := io.ReadFull(body, header)
+		if n < 8 || err == io.EOF {
+			break
+		}
+		if header[1]|header[2]|header[3] != 0 {
+			b, err := io.ReadAll(body)
+			if err != nil {
+				buf.Write([]byte(err.Error()))
+				break
+			}
+			buf.Write(header)
+			buf.Write(b)
+			break
+		}
+		size := binary.BigEndian.Uint32(header[4:])
+		frame := make([]byte, size)
+		_, err = io.ReadFull(body, frame)
+		if err == io.EOF {
+			break
+		}
+		buf.Write(frame)
 	}
-	if err != nil {
-		panic(err)
-	}
-	if stderr.Len() > 0 {
-		return stderr.Bytes()
-	}
-	return stdout.Bytes()
+	// buf, _ := io.ReadAll(body)
+	return buf.Bytes()
 }
