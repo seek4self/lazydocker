@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"lazydocker/views"
 	"sync"
@@ -98,14 +99,14 @@ func (s *ContainerStats) plot() []byte {
 	buf := bufPool.Get().(*bytes.Buffer)
 	defer resetBuf(buf)
 	buf.WriteString(asciigraph.Plot(s.out.CPU,
-		asciigraph.Caption("cpu usage"),
+		asciigraph.Caption(fmt.Sprintf("cpu usage %.2f%%", s.out.CPU[cache-1])),
 		asciigraph.Offset(5),
 		asciigraph.Height((views.TerminalHeight-10)/2),
 	))
 	buf.WriteRune('\n')
 	buf.WriteRune('\n')
 	buf.WriteString(asciigraph.Plot(s.out.Memory,
-		asciigraph.Caption("memory usage"),
+		asciigraph.Caption(fmt.Sprintf("memory usage %.2f%%", s.out.Memory[cache-1])),
 		asciigraph.Offset(5),
 		asciigraph.Height((views.TerminalHeight-10)/2),
 	))
@@ -130,12 +131,16 @@ func (s *ContainerStats) parseStats() {
 		} else {
 			cstats.Memory[s.index] = float64(cstats.MUsed) / float64(cstats.MAvailable) * 100.0
 		}
+
 		cpuDelta := float64(stats.CPUStats.CPUUsage.TotalUsage - stats.PreCPUStats.CPUUsage.TotalUsage)
 		sysCPUDelta := float64(stats.CPUStats.SystemUsage - stats.PreCPUStats.SystemUsage)
 		if sysCPUDelta == 0 {
 			cstats.CPU[s.index] = 0
 		} else {
 			cstats.CPU[s.index] = cpuDelta / sysCPUDelta * float64(stats.CPUStats.OnlineCPUs) * 100.0
+		}
+		if cstats.CPU[s.index] > 100 {
+			cstats.CPU[s.index] = 100
 		}
 		// fmt.Println(cstats)
 		s.l.Unlock()

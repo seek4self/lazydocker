@@ -125,7 +125,7 @@ func (n *Navigation) FocusRight() {
 func (n *Navigation) getContent() {
 	n.parseText(n.currentHeader().Detail(n.input))
 	n.offset = 0
-	if n.currentHeader().BotUp {
+	if n.currentHeader().BotUp && n.totalRows() > n.visibleRows() {
 		n.offset = n.totalRows() - n.visibleRows() + 1
 	}
 }

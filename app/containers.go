@@ -26,7 +26,7 @@ func containerOption() string {
 }
 
 func freshContainers(option string, table *views.Table) {
-	table.Rows = make([][]string, 0)
+	table.Rows = table.Rows[:0]
 	status := docker.PS(option)
 	for _, s := range status {
 		// fmt.Println(s)

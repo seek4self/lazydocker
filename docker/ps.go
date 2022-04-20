@@ -47,7 +47,7 @@ func PS(option string) []ContainerStatus {
 	status := make([]ContainerStatus, 0)
 	for _, v := range containers {
 		status = append(status, ContainerStatus{
-			ID:     v.ID,
+			ID:     v.ID[:12],
 			Image:  v.Image,
 			CMD:    v.Command,
 			Age:    parseAge(v.Status),
